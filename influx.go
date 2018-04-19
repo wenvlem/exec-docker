@@ -11,7 +11,6 @@ func newInfluxFormatter() influxFormatter {
 	return influxFormatter{}
 }
 
-// func (i influxFormatter) format(m map[string]measurement, w io.Writer) error {
 func (i influxFormatter) format(m map[string]measurement) string {
 	s := ""
 
@@ -25,7 +24,7 @@ func (i influxFormatter) format(m map[string]measurement) string {
 			fields = append(fields, fmt.Sprintf("%s=%v", k, m[i].fields[k]))
 		}
 
-		s = fmt.Sprint(m[i].name)
+		s += fmt.Sprint(m[i].name)
 		if len(tags) > 0 {
 			s += fmt.Sprint(strings.Join(tags, ","))
 		}
@@ -33,17 +32,7 @@ func (i influxFormatter) format(m map[string]measurement) string {
 			s += fmt.Sprintf(" %s", strings.Join(fields, ","))
 		}
 		s += fmt.Sprint("\n")
-		// _, err :=fmt.Fprint(w, s)
-		// if err != nil {
-		// 	errText += err.Error()
-		// }
 	}
 
-	// if errText != "" {
-	// 	return nil, fmt.Errorf("Failed to write")
-	// }
 	return s
-
-	// fmt.Printf("%s", strings.Join(m))
-	// fmt.Printf("%+v\n", measurements)
 }
