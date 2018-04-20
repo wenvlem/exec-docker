@@ -27,12 +27,7 @@ func main() {
 	var measurements = []measurement{}
 
 	for i := range dock.collectors {
-		err := dock.collectors[i].collect()
-		if err != nil {
-			fmt.Println(err.Error())
-			continue
-		}
-		m, err := dock.collectors[i].filter()
+		m, err := dock.collectors[i].collect()
 		if err != nil {
 			fmt.Println(err.Error())
 			continue
@@ -61,8 +56,7 @@ func publish(d string, w io.WriteCloser) error {
 
 type (
 	collector interface {
-		collect() error
-		filter() ([]measurement, error)
+		collect() ([]measurement, error)
 	}
 
 	formatter interface {

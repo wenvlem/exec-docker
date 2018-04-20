@@ -9,60 +9,38 @@ import (
 )
 
 type container struct {
-	cli    *client.Client
-	tags   map[string]interface{}
-	fields map[string]interface{}
+	cli *client.Client
 }
 
 func newContainerCollector(cli *client.Client) *container {
-	return &container{cli: cli, fields: make(map[string]interface{})}
+	return &container{cli: cli}
 }
 
-func (c *container) collect() error {
+func (c *container) collect() ([]measurement, error) {
 	if c.cli == nil {
-		return fmt.Errorf("Client not established")
-	}
-	if c.fields == nil {
-		fmt.Println("making thing")
-		c.fields = make(map[string]interface{})
+		return nil, fmt.Errorf("Client not established")
 	}
 
-	containers, err := listContainers(c.cli)
+	containers, err := c.cli.ContainerList(context.Background(), types.ContainerListOptions{All: true, Size: true})
 	if err != nil {
-		return fmt.Errorf("Failed to list containers - %s", err.Error())
+		return nil, fmt.Errorf("Failed to list containers - %s", err.Error())
 	}
 
-	c.fields["total"] = len(containers)
-	if c.fields["size_rw"] == nil {
-		c.fields["size_rw"] = int64(0)
+	m := measurement{name: "containers", fields: map[string]interface{}{}}
+	m.fields["total"] = len(containers)
+	if m.fields["size_rw"] == nil {
+		m.fields["size_rw"] = int64(0)
 	}
 
 	for i := range containers {
-		c.fields["size_rw"] = c.fields["size_rw"].(int64) + containers[i].SizeRw
-		if c.fields[containers[i].State] == nil {
-			c.fields[containers[i].State] = 0
+		m.fields["size_rw"] = m.fields["size_rw"].(int64) + containers[i].SizeRw
+		if m.fields[containers[i].State] == nil {
+			m.fields[containers[i].State] = 0
 		}
-		c.fields[containers[i].State] = c.fields[containers[i].State].(int) + 1
+		m.fields[containers[i].State] = m.fields[containers[i].State].(int) + 1
 		usedImages[parseID(containers[i].ImageID)] = containers[i].Image
 		populateVolumes(containers[i].Mounts)
 	}
-	return nil
-}
 
-func listContainers(cli *client.Client) ([]types.Container, error) {
-	containers, err := cli.ContainerList(context.Background(), types.ContainerListOptions{All: true, Size: true})
-	if err != nil {
-		return nil, err
-	}
-
-	return containers, nil
-}
-
-func (c *container) filter() ([]measurement, error) {
-	if c.fields == nil {
-		fmt.Println("filter making")
-		c.fields = make(map[string]interface{})
-	}
-
-	return []measurement{measurement{name: "containers", fields: c.fields}}, nil
+	return []measurement{m}, nil
 }

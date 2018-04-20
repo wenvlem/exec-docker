@@ -11,6 +11,7 @@ func newInfluxFormatter() influxFormatter {
 	return influxFormatter{}
 }
 
+// format returns measurements in influx line protocol format.
 func (i influxFormatter) format(m []measurement) string {
 	s := ""
 

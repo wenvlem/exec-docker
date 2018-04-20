@@ -9,13 +9,11 @@ import (
 )
 
 type volumeCollector struct {
-	cli   *client.Client
-	stats []measurement // tag=volume:total size:+=usagetotal.size; volume:a size:usagetotal.size
+	cli *client.Client
 }
 
 func newVolumeCollector(cli *client.Client) *volumeCollector {
-	// return &volumeCollector{cli: cli, tags: make(map[string]interface{}), fields: make(map[string]interface{})}
-	return &volumeCollector{cli: cli, stats: []measurement{}}
+	return &volumeCollector{cli: cli}
 }
 
 // usedVolumes is a map of volume names.
@@ -37,19 +35,18 @@ func populateVolumes(m []types.MountPoint) {
 	}
 }
 
-// func (c *volumeCollector) collect() ([]measurement, error) {
-func (c *volumeCollector) collect() error {
+func (c *volumeCollector) collect() ([]measurement, error) {
 	if c.cli == nil {
-		return fmt.Errorf("Client not established")
+		return nil, fmt.Errorf("Client not established")
 	}
-	ms := []measurement{}
 
 	usage, err := c.cli.DiskUsage(context.Background())
 	if err != nil {
-		return fmt.Errorf("Failed to list volumes - %s", err.Error())
+		return nil, fmt.Errorf("Failed to list volumes - %s", err.Error())
 	}
 	volumes := usage.Volumes
 
+	ms := []measurement{}
 	m := measurement{name: "volumes", tags: map[string]interface{}{"volume": "total"}, fields: map[string]interface{}{}}
 	m.fields["total"] = len(volumes)
 
@@ -71,15 +68,6 @@ func (c *volumeCollector) collect() error {
 		ms = append(ms, me)
 	}
 	ms = append(ms, m)
-	c.stats = ms
-	return nil
-	// 	return ms, nil
-}
 
-func (c *volumeCollector) filter() ([]measurement, error) {
-	if c.stats == nil {
-		c.stats = []measurement{}
-	}
-
-	return c.stats, nil
+	return ms, nil
 }
