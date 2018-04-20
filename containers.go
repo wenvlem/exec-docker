@@ -44,6 +44,7 @@ func (c *container) collect() error {
 		}
 		c.fields[containers[i].State] = c.fields[containers[i].State].(int) + 1
 		usedImages[parseID(containers[i].ImageID)] = containers[i].Image
+		populateVolumes(containers[i].Mounts)
 	}
 	return nil
 }

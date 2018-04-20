@@ -21,9 +21,10 @@ func main() {
 
 	dock.addCollector(newContainerCollector(cli))
 	dock.addCollector(newImageCollector(cli))
+	dock.addCollector(newVolumeCollector(cli))
 
 	var mTex sync.RWMutex
-	var measurements = map[string]measurement{}
+	var measurements = []measurement{}
 
 	for i := range dock.collectors {
 		err := dock.collectors[i].collect()
@@ -36,11 +37,9 @@ func main() {
 			fmt.Println(err.Error())
 			continue
 		}
-		for i := range m {
-			mTex.Lock()
-			measurements[m[i].name] = m[i]
-			mTex.Unlock()
-		}
+		mTex.Lock()
+		measurements = append(measurements, m...)
+		mTex.Unlock()
 	}
 
 	dock.addFormatter(newInfluxFormatter())
@@ -67,7 +66,7 @@ type (
 	}
 
 	formatter interface {
-		format(map[string]measurement) string
+		format([]measurement) string
 	}
 
 	measurement struct {

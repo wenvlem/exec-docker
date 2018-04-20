@@ -11,7 +11,7 @@ func newInfluxFormatter() influxFormatter {
 	return influxFormatter{}
 }
 
-func (i influxFormatter) format(m map[string]measurement) string {
+func (i influxFormatter) format(m []measurement) string {
 	s := ""
 
 	for i := range m {
@@ -26,7 +26,7 @@ func (i influxFormatter) format(m map[string]measurement) string {
 
 		s += fmt.Sprint(m[i].name)
 		if len(tags) > 0 {
-			s += fmt.Sprint(strings.Join(tags, ","))
+			s += fmt.Sprintf(",%s", strings.Join(tags, ","))
 		}
 		if len(fields) > 0 {
 			s += fmt.Sprintf(" %s", strings.Join(fields, ","))
