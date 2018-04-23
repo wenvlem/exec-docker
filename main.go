@@ -27,6 +27,7 @@ func main() {
 	var measurements = []measurement{}
 
 	for i := range dock.collectors {
+		// todo: goroutine
 		m, err := dock.collectors[i].collect()
 		if err != nil {
 			fmt.Println(err.Error())
