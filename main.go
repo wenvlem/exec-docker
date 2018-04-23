@@ -13,7 +13,7 @@ import (
 func main() {
 	cli, err := newClient()
 	if err != nil {
-		fmt.Println(err.Error())
+		fmt.Fprintln(os.Stderr, err.Error())
 		return
 	}
 
@@ -30,7 +30,7 @@ func main() {
 		// todo: goroutine
 		m, err := dock.collectors[i].collect()
 		if err != nil {
-			fmt.Println(err.Error())
+			fmt.Fprintln(os.Stderr, err.Error())
 			continue
 		}
 		mTex.Lock()
@@ -43,7 +43,7 @@ func main() {
 	for i := range dock.formatters {
 		err = publish(dock.formatters[i].format(measurements), os.Stdout)
 		if err != nil {
-			fmt.Printf("Failed to publish measurements - %s\n", err.Error())
+			fmt.Fprintf(os.Stderr, "Failed to publish measurements - %s\n", err.Error())
 			return
 		}
 	}
