@@ -4,6 +4,23 @@
 
 exec-docker is a simple binary to be used with telegraf's `exec` plugin. It outputs in influx line protocol. It collects and reports several image, volume, and container metrics.
 
+#### Usage
+```
+  -c	Collect container metrics. (default true)
+  -i	Collect image metrics. (default true)
+  -v	Collect volume metrics. (default true)
+```
+
+Example Use:
+```
+$ exec-docker -v=false
+containers total=5,size_rw=7661352,running=5
+images total=4,dangling=0,unused=0,size=744879901
+
+$ exec-docker -v=false -i=false
+containers total=5,size_rw=7661352,running=5
+```
+
 Metrics gathered include:
  - Containers:
    - Total created
@@ -22,23 +39,6 @@ Metrics gathered include:
 (Metrics gathered may not be applicable to all users)
 
 Errors are printed to stderr.
-
-#### Usage
-```
-  -c	Collect container metrics. (default true)
-  -i	Collect image metrics. (default true)
-  -v	Collect volume metrics. (default true)
-```
-
-Example Use:
-```
-$ exec-docker -v=false
-containers total=5,size_rw=7661352,running=5
-images total=4,dangling=0,unused=0,size=744879901
-
-$ exec-docker -v=false -i=false
-containers total=5,size_rw=7661352,running=5
-```
 
 #### Example Chronograf Dashboard:
 ![chronograf](assets/chron.png?raw=true "chronograf")
