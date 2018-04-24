@@ -22,7 +22,7 @@ func newImageCollector(cli *client.Client) *imageCollector {
 }
 
 // usedImages is a map of image ids and their names.
-var usedImages = map[string]string{}
+var usedImages = map[string]struct{}{}
 
 // imgUsed returns true if an image is in use by a container.
 func imgUsed(s string) bool {
@@ -37,6 +37,13 @@ func parseID(i string) string {
 		return j[1]
 	}
 	return i
+}
+
+// populateImages populates the list of images used.
+func populateImages(c []types.Container, err error) {
+	for i := range c {
+		usedImages[parseID(c[i].ImageID)] = struct{}{}
+	}
 }
 
 // collect collects image information from a docker container.
@@ -64,6 +71,8 @@ func (c *imageCollector) collect() ([]measurement, error) {
 	if m.fields["size"] == nil {
 		m.fields["size"] = int64(0)
 	}
+
+	populateImages(listContainers(c.cli))
 
 	for i := range images {
 		if !imgUsed(parseID(images[i].ID)) {

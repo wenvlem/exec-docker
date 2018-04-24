@@ -29,12 +29,15 @@ func volumeUsed(s string) bool {
 }
 
 // populateVolumes populates the usedVolumes map.
-func populateVolumes(m []types.MountPoint) {
-	for i := range m {
-		if m[i].Type != "volume" {
-			continue
+// func populateVolumes(m []types.MountPoint) {
+func populateVolumes(c []types.Container, err error) {
+	for i := range c {
+		for j := range c[i].Mounts {
+			if c[i].Mounts[j].Type != "volume" {
+				continue
+			}
+			usedVolumes[c[i].Mounts[j].Name] = struct{}{}
 		}
-		usedVolumes[m[i].Name] = struct{}{}
 	}
 }
 
@@ -60,6 +63,8 @@ func (c *volumeCollector) collect() ([]measurement, error) {
 	if m.fields["size"] == nil {
 		m.fields["size"] = int64(0)
 	}
+
+	populateVolumes(listContainers(c.cli))
 
 	for i := range volumes {
 		me := measurement{name: "volumes", tags: map[string]string{"volume": volumes[i].Name}, fields: map[string]interface{}{}}

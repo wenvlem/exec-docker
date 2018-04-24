@@ -25,7 +25,7 @@ func (c *containerCollector) collect() ([]measurement, error) {
 		return nil, fmt.Errorf("Client not established")
 	}
 
-	containers, err := c.cli.ContainerList(context.Background(), types.ContainerListOptions{All: true, Size: true})
+	containers, err := listContainers(c.cli)
 	if err != nil {
 		return nil, fmt.Errorf("Failed to list containers - %s", err.Error())
 	}
@@ -42,12 +42,17 @@ func (c *containerCollector) collect() ([]measurement, error) {
 			m.fields[containers[i].State] = 0
 		}
 		m.fields[containers[i].State] = m.fields[containers[i].State].(int) + 1
-
-		// populate the used images/volumes (for use by the images/volumes collector).
-		// todo: pull out into separate functions (listContainers called by populateImages, populateVolumes)
-		usedImages[parseID(containers[i].ImageID)] = containers[i].Image
-		populateVolumes(containers[i].Mounts)
 	}
 
 	return []measurement{m}, nil
+}
+
+// listContainers lists docker containers.
+func listContainers(cli *client.Client) ([]types.Container, error) {
+	c, err := cli.ContainerList(context.Background(), types.ContainerListOptions{All: true, Size: true})
+	if err != nil {
+		return nil, err
+	}
+
+	return c, nil
 }

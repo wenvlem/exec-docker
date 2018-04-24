@@ -31,9 +31,7 @@ func start() {
 
 	dock := dockerEngine{}
 
-	// These collectors could be added dependent on cli flags. Due to the
-	// limitations of docker image/volume listing (unused aren't listed),
-	// containers must be collected first.
+	// These collectors could be added dependent on cli flags.
 	dock.addCollector(newContainerCollector(cli))
 	dock.addCollector(newImageCollector(cli))
 	dock.addCollector(newVolumeCollector(cli))
@@ -41,18 +39,27 @@ func start() {
 	var mTex sync.RWMutex
 	var measurements = []measurement{}
 
+	var wg sync.WaitGroup
+
+	// collect from collectors.
 	for i := range dock.collectors {
-		// don't goroutine because docker doesn't give unused volume|image
-		// data when listing images/volumes
-		m, err := dock.collectors[i].collect()
-		if err != nil {
-			fmt.Fprintln(os.Stderr, err.Error())
-			continue
-		}
-		mTex.Lock()
-		measurements = append(measurements, m...)
-		mTex.Unlock()
+		wg.Add(1)
+
+		go func(d collector) {
+			defer wg.Done()
+			m, err := d.collect()
+			if err != nil {
+				fmt.Fprintln(os.Stderr, err.Error())
+				return
+			}
+			mTex.Lock()
+			measurements = append(measurements, m...)
+			mTex.Unlock()
+		}(dock.collectors[i])
 	}
+
+	// wait for all collectors to finish.
+	wg.Wait()
 
 	// set the formatter, currently there is only support for an influx formatter
 	// but if other's are needed, this can be in a switch statement to set the
