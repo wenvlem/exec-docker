@@ -1,3 +1,6 @@
+// exec-docker is a simple binary to be used with telegraf's `exec` plugin.
+// It outputs in influx line protocol. It collects and reports several
+// image, volume, and container metrics.
 package main
 
 import (
@@ -17,7 +20,7 @@ func main() {
 		return
 	}
 
-	dock := dockerEngine{cli: cli}
+	dock := dockerEngine{}
 
 	dock.addCollector(newContainerCollector(cli))
 	dock.addCollector(newImageCollector(cli))
@@ -49,8 +52,7 @@ func main() {
 	}
 }
 
-func publish(d string, w io.WriteCloser) error {
-	defer w.Close()
+func publish(d string, w io.Writer) error {
 	_, err := fmt.Fprint(w, d)
 	return err
 }
@@ -71,7 +73,6 @@ type (
 	}
 
 	dockerEngine struct {
-		cli        *client.Client
 		collectors []collector
 		formatters []formatter
 	}
