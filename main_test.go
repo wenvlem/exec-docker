@@ -5,9 +5,14 @@ import (
 	"testing"
 )
 
-var container_id string
+var noDocker bool
 
 func TestMain(m *testing.M) {
+	_, err := newClient()
+	if err != nil {
+		noDocker = true
+	}
+
 	m.Run()
 }
 
@@ -30,7 +35,7 @@ func TestInfluxFormatter(t *testing.T) {
 	ms = []measurement{
 		{
 			name: "test",
-			tags: map[string]interface{}{"metricA": "123"},
+			tags: map[string]string{"metricA": "123"},
 		},
 	}
 	out = iFF.format(ms)
@@ -43,7 +48,7 @@ func TestInfluxFormatter(t *testing.T) {
 	ms = []measurement{
 		{
 			name:   "test",
-			tags:   map[string]interface{}{"metricA": "123"},
+			tags:   map[string]string{"metricA": "123"},
 			fields: map[string]interface{}{"fieldA": "abc"},
 		},
 	}
@@ -56,6 +61,10 @@ func TestInfluxFormatter(t *testing.T) {
 }
 
 func TestVolumes(t *testing.T) {
+	if noDocker {
+		t.SkipNow()
+	}
+
 	cli, err := newClient()
 	if err != nil {
 		t.Errorf("Failed to initialize client - '%s'", err.Error())
@@ -78,6 +87,10 @@ func TestVolumes(t *testing.T) {
 }
 
 func TestContainers(t *testing.T) {
+	if noDocker {
+		t.SkipNow()
+	}
+
 	cli, err := newClient()
 	if err != nil {
 		t.Errorf("Failed to initialize client - '%s'", err.Error())
@@ -100,6 +113,10 @@ func TestContainers(t *testing.T) {
 }
 
 func TestImages(t *testing.T) {
+	if noDocker {
+		t.SkipNow()
+	}
+
 	cli, err := newClient()
 	if err != nil {
 		t.Errorf("Failed to initialize client - '%s'", err.Error())
@@ -140,5 +157,9 @@ func TestEngine(t *testing.T) {
 }
 
 func TestMainFunc(t *testing.T) {
+	if noDocker {
+		t.SkipNow()
+	}
+
 	main()
 }

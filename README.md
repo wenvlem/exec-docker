@@ -1,8 +1,25 @@
 # exec-docker
-[![Build Status](https://travis-ci.org/wenvlem/exec-docker.svg?branch=master)](https://travis-ci.org/wenvlem/exec-docker)  
+[![Build Status](https://travis-ci.org/wenvlem/exec-docker.svg?branch=master)](https://travis-ci.org/wenvlem/exec-docker)
 [![GoDoc](https://godoc.org/github.com/nanopack/portal?status.svg)](https://godoc.org/github.com/wenvlem/exec-docker)
 
 exec-docker is a simple binary to be used with telegraf's `exec` plugin. It outputs in influx line protocol. It collects and reports several image, volume, and container metrics.
+
+Metrics gathered include:
+ - Containers:
+   - Total created
+   - Total in each "state"
+   - Total disk consumed
+ - Images:
+   - Total created
+   - Total unused
+   - Total dangling
+   - Total disk consumed
+ - Volumes:
+   - Total created
+   - Total unused
+   - Total disk consumed
+
+(Metrics gathered may not be applicable to all users)
 
 Errors are printed to stderr.
 

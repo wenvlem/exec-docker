@@ -10,10 +10,13 @@ import (
 	"github.com/docker/docker/client"
 )
 
+// imageCollector contains the docker client from which to collect various
+// image stats.
 type imageCollector struct {
 	cli *client.Client
 }
 
+// newImageCollector returns a new ImageCollector.
 func newImageCollector(cli *client.Client) *imageCollector {
 	return &imageCollector{cli: cli}
 }
@@ -36,6 +39,7 @@ func parseID(i string) string {
 	return i
 }
 
+// collect collects image information from a docker container.
 func (c *imageCollector) collect() ([]measurement, error) {
 	if c.cli == nil {
 		return nil, fmt.Errorf("Client not established")
@@ -71,6 +75,7 @@ func (c *imageCollector) collect() ([]measurement, error) {
 	return []measurement{m}, nil
 }
 
+// listImages lists docker images.
 func listImages(cli *client.Client, dangling bool) ([]types.ImageSummary, error) {
 	fil := filters.NewArgs()
 	fil.Add("dangling", fmt.Sprintf("%t", dangling))

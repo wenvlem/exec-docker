@@ -8,10 +8,13 @@ import (
 	"github.com/docker/docker/client"
 )
 
+// volumeCollector contains the docker client from which to collect various
+// volume stats.
 type volumeCollector struct {
 	cli *client.Client
 }
 
+// newVolumeCollector returns a new VolumeCollector.
 func newVolumeCollector(cli *client.Client) *volumeCollector {
 	return &volumeCollector{cli: cli}
 }
@@ -35,6 +38,7 @@ func populateVolumes(m []types.MountPoint) {
 	}
 }
 
+// collect collects volume information from a docker container.
 func (c *volumeCollector) collect() ([]measurement, error) {
 	if c.cli == nil {
 		return nil, fmt.Errorf("Client not established")
@@ -47,7 +51,7 @@ func (c *volumeCollector) collect() ([]measurement, error) {
 	volumes := usage.Volumes
 
 	ms := []measurement{}
-	m := measurement{name: "volumes", tags: map[string]interface{}{"volume": "total"}, fields: map[string]interface{}{}}
+	m := measurement{name: "volumes", tags: map[string]string{"volume": "total"}, fields: map[string]interface{}{}}
 	m.fields["total"] = len(volumes)
 
 	if m.fields["unused"] == nil {
@@ -58,7 +62,7 @@ func (c *volumeCollector) collect() ([]measurement, error) {
 	}
 
 	for i := range volumes {
-		me := measurement{name: "volumes", tags: map[string]interface{}{"volume": volumes[i].Name}, fields: map[string]interface{}{}}
+		me := measurement{name: "volumes", tags: map[string]string{"volume": volumes[i].Name}, fields: map[string]interface{}{}}
 
 		if !volumeUsed(volumes[i].Name) {
 			m.fields["unused"] = m.fields["unused"].(int) + 1

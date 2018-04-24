@@ -13,7 +13,16 @@ import (
 	"github.com/docker/docker/client"
 )
 
+// main calls start() and runs the application. It isn't necessary, but
+// serves a similar purpose to the start function, making it clear that
+// it can stand alone in it's own package.
 func main() {
+	start()
+}
+
+// start runs the collector. It is a separate method (from main) in case
+// there was ever cause to export anything and call from a separate package.
+func start() {
 	cli, err := newClient()
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err.Error())
@@ -22,6 +31,9 @@ func main() {
 
 	dock := dockerEngine{}
 
+	// These collectors could be added dependent on cli flags. Due to the
+	// limitations of docker image/volume listing (unused aren't listed),
+	// containers must be collected first.
 	dock.addCollector(newContainerCollector(cli))
 	dock.addCollector(newImageCollector(cli))
 	dock.addCollector(newVolumeCollector(cli))
@@ -30,7 +42,8 @@ func main() {
 	var measurements = []measurement{}
 
 	for i := range dock.collectors {
-		// todo: goroutine
+		// don't goroutine because docker doesn't give unused volume|image
+		// data when listing images/volumes
 		m, err := dock.collectors[i].collect()
 		if err != nil {
 			fmt.Fprintln(os.Stderr, err.Error())
@@ -41,43 +54,50 @@ func main() {
 		mTex.Unlock()
 	}
 
-	dock.addFormatter(newInfluxFormatter())
+	// set the formatter, currently there is only support for an influx formatter
+	// but if other's are needed, this can be in a switch statement to set the
+	// formatter to another output telegraf supports.
+	dock.setFormatter(newInfluxFormatter())
 
-	for i := range dock.formatters {
-		err = publish(dock.formatters[i].format(measurements), os.Stdout)
-		if err != nil {
-			fmt.Fprintf(os.Stderr, "Failed to publish measurements - %s\n", err.Error())
-			return
-		}
+	err = publish(dock.formatter.format(measurements), os.Stdout)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Failed to publish measurements - %s\n", err.Error())
+		return
 	}
 }
 
+// publish writes the formatted metrics (string) to a writer.
 func publish(d string, w io.Writer) error {
 	_, err := fmt.Fprint(w, d)
 	return err
 }
 
 type (
+	// collector defines what a collector must do.
 	collector interface {
 		collect() ([]measurement, error)
 	}
 
+	// formatter defines what a formatter must do.
 	formatter interface {
 		format([]measurement) string
 	}
 
+	// measurement defines a metric.
 	measurement struct {
 		name   string
-		tags   map[string]interface{}
+		tags   map[string]string
 		fields map[string]interface{}
 	}
 
+	// dockerEngine defines a docker engine to gather from.
 	dockerEngine struct {
 		collectors []collector
-		formatters []formatter
+		formatter  formatter
 	}
 )
 
+// newClient creates a new docker client and negotiate's the API version.
 func newClient() (*client.Client, error) {
 	cli, err := client.NewEnvClient()
 	if err != nil {
@@ -89,10 +109,12 @@ func newClient() (*client.Client, error) {
 	return cli, nil
 }
 
+// addCollector adds a collector to the dockerEngine.
 func (d *dockerEngine) addCollector(c collector) {
 	d.collectors = append(d.collectors, c)
 }
 
-func (d *dockerEngine) addFormatter(f formatter) {
-	d.formatters = append(d.formatters, f)
+// setFormatter sets the dockerEngine's formatter.
+func (d *dockerEngine) setFormatter(f formatter) {
+	d.formatter = f
 }

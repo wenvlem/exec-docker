@@ -5,8 +5,10 @@ import (
 	"strings"
 )
 
+// influxFormatter allows measurements to be formatted in influx line protocol.
 type influxFormatter struct{}
 
+// newInfluxFormatter returns a new influxFormatter.
 func newInfluxFormatter() influxFormatter {
 	return influxFormatter{}
 }
@@ -18,7 +20,7 @@ func (i influxFormatter) format(m []measurement) string {
 	for i := range m {
 		tags := []string{}
 		for k := range m[i].tags {
-			tags = append(tags, fmt.Sprintf("%s=%v", k, m[i].tags[k]))
+			tags = append(tags, fmt.Sprintf("%s=%s", k, m[i].tags[k]))
 		}
 		fields := []string{}
 		for k := range m[i].fields {
