@@ -5,6 +5,7 @@ package main
 
 import (
 	"context"
+	"flag"
 	"fmt"
 	"io"
 	"os"
@@ -12,6 +13,19 @@ import (
 
 	"github.com/docker/docker/client"
 )
+
+var (
+	collectC bool
+	collectI bool
+	collectV bool
+)
+
+func init() {
+	flag.BoolVar(&collectC, "c", true, "Collect container metrics.")
+	flag.BoolVar(&collectI, "i", true, "Collect image metrics.")
+	flag.BoolVar(&collectV, "v", true, "Collect volume metrics.")
+	flag.Parse()
+}
 
 // main calls start() and runs the application. It isn't necessary, but
 // serves a similar purpose to the start function, making it clear that
@@ -31,14 +45,19 @@ func start() {
 
 	dock := dockerEngine{}
 
-	// These collectors could be added dependent on cli flags.
-	dock.addCollector(newContainerCollector(cli))
-	dock.addCollector(newImageCollector(cli))
-	dock.addCollector(newVolumeCollector(cli))
+	// Add configured collectors. Collect all by default.
+	if collectC {
+		dock.addCollector(newContainerCollector(cli))
+	}
+	if collectI {
+		dock.addCollector(newImageCollector(cli))
+	}
+	if collectV {
+		dock.addCollector(newVolumeCollector(cli))
+	}
 
 	var mTex sync.RWMutex
 	var measurements = []measurement{}
-
 	var wg sync.WaitGroup
 
 	// collect from collectors.

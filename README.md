@@ -23,6 +23,23 @@ Metrics gathered include:
 
 Errors are printed to stderr.
 
+#### Usage
+```
+  -c	Collect container metrics. (default true)
+  -i	Collect image metrics. (default true)
+  -v	Collect volume metrics. (default true)
+```
+
+Example Use:
+```
+$ exec-docker -v=false
+containers total=5,size_rw=7661352,running=5
+images total=4,dangling=0,unused=0,size=744879901
+
+$ exec-docker -v=false -i=false
+containers total=5,size_rw=7661352,running=5
+```
+
 #### Example Chronograf Dashboard:
 ![chronograf](assets/chron.png?raw=true "chronograf")
 
