@@ -153,7 +153,7 @@ func TestEngine(t *testing.T) {
 
 	dock := dockerEngine{}
 	dock.addCollector(cc)
-	dock.addFormatter(iFF)
+	dock.setFormatter(iFF)
 }
 
 func TestMainFunc(t *testing.T) {
